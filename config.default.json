@@ -1,0 +1,12 @@
+{
+	"listenPort": 22141,
+	"secretKey": "<put a long random string here, and use the same value for the module's configuration field BotWsKey>",
+	"discordToken": "<token>",
+	"useClassEmoji": false,
+	"classEmojis": [],
+	"useRaceEmoji": false,
+	"raceEmojis": [],
+	"filterAtHere": true,
+	"filterAtEveryone": true,
+	"apiBaseUrl": ""
+}

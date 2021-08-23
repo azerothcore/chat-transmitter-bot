@@ -55,15 +55,18 @@ export abstract class Bot {
 		const guild = await Guild.findOrCreate(message.guild.id);
 
 		const action = (message.args.action as string).trim().toLowerCase();
-		const role = message.mentions.roles.first();
+		const role = message.mentions.roles.first() ?? (message.args.role as string).trim();
+
+		const roleId = typeof role === "string" ? role : role.id;
+		const roleName = typeof role === "string" ? role : role.name;
 
 		if (action === "add" || action === "a") {
-			await guild.addAdminRole(role.id);
-			const confirmMessage = await message.reply(`Role "${role.name}" added to the admin roles.`);
+			await guild.addAdminRole(roleId);
+			const confirmMessage = await message.reply(`Role "${roleName}" added to the admin roles.`);
 			await this.deleteCommandAndConfirmMessage(message, confirmMessage);
 		} else if (action === "delete" || action === "del" || action === "d" || action === "remove" || action === "rem" || action === "r") {
-			await guild.removeAdminRole(role.id);
-			const confirmMessage = await message.reply(`Role "${role.name}" removed from the admin roles.`);
+			await guild.removeAdminRole(roleId);
+			const confirmMessage = await message.reply(`Role "${roleName}" removed from the admin roles.`);
 			await this.deleteCommandAndConfirmMessage(message, confirmMessage);
 		} else {
 			await message.reply(`Unknown action. Syntax: \`${commandPrefix}adminrole add <roleId>\` or \`${commandPrefix}adminrole delete <roleId>\`.`);

@@ -1,5 +1,6 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
 
+/* tslint:disable-next-line:class-name */
 export class areatable1629066987486 implements MigrationInterface {
 	public async up(queryRunner: QueryRunner): Promise<void> {
 		await queryRunner.query(`

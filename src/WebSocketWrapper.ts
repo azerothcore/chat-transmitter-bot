@@ -38,7 +38,7 @@ export class WebSocketWrapper {
 			try {
 				const parsed = JSON.parse(payload);
 				const { message, data } = parsed;
-				for (const cb of this.callbacks["message"]) {
+				for (const cb of this.callbacks.message) {
 					if (typeof cb === "function") {
 						cb(message, data);
 					}
@@ -49,7 +49,7 @@ export class WebSocketWrapper {
 		});
 
 		this.ws.on("close", (ws: WebSocket) => {
-			for (const cb of this.callbacks["close"]) {
+			for (const cb of this.callbacks.close) {
 				if (typeof cb === "function") {
 					cb();
 				}

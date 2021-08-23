@@ -20,14 +20,14 @@ export function start(config: Config): void {
 
 	const chatController = new ChatController();
 
-	wss.onConnection(async (ws, data) => {
+	wss.onConnection(async (ws, connData) => {
 		const ipBan = await IpBan.find(ws.remoteAddress);
 		if (ipBan?.banned) {
 			ws.close(4001, "Access denied");
 			return;
 		}
 
-		if (data.key === undefined || (data.key as string) !== config.secretKey) {
+		if (connData.key === undefined || (connData.key as string) !== config.secretKey) {
 			ws.close(4000, "Incorrect key");
 			IpBan.addConnectionAttempt(ws.remoteAddress);
 			return;

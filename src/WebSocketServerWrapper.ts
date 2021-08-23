@@ -15,7 +15,7 @@ export class WebSocketServerWrapper {
 	}
 
 	public onConnection(callback: (ws: WebSocketWrapper, handshakeData?: queryString.ParsedQuery) => void) {
-		this.callbacks["connection"].push(callback);
+		this.callbacks.connection.push(callback);
 	}
 
 	private setEvents(): void {
@@ -24,7 +24,7 @@ export class WebSocketServerWrapper {
 			const data = queryString.parse(query);
 
 			const wsw = new WebSocketWrapper(ws, request.socket.remoteAddress);
-			for (const cb of this.callbacks["connection"]) {
+			for (const cb of this.callbacks.connection) {
 				if (typeof cb === "function") {
 					cb(wsw, data);
 				}

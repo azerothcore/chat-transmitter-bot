@@ -133,8 +133,8 @@ export abstract class Bot {
 			.slice(commandPrefix.length)
 			.slice("who".length)
 			.trim();
-		const removeMatch = (query: string, match: RegExpExecArray): string => {
-			return query.slice(0, match.index) + query.slice(match.index + match[0].length);
+		const removeMatch = (q: string, regexMatch: RegExpExecArray): string => {
+			return q.slice(0, regexMatch.index) + q.slice(regexMatch.index + regexMatch[0].length);
 		};
 		const characterNamePredicate = (player: IPlayer, name: string) => player.name.toLowerCase().includes(name);
 		const guildNamePredicate = (player: IPlayer, guild: string) => player.guildName?.toLowerCase().includes(guild);
@@ -190,8 +190,8 @@ export abstract class Bot {
 			for (let part of split) {
 				if (part.match(/(\d+-\d+|\d+)/)) {
 					// Level query
-					const lowerBound = parseInt(part.includes("-") ? part.split("-")[0] : part);
-					const upperBound = parseInt(part.includes("-") ? part.split("-")[1] : part);
+					const lowerBound = parseInt(part.includes("-") ? part.split("-")[0] : part, 10);
+					const upperBound = parseInt(part.includes("-") ? part.split("-")[1] : part, 10);
 
 					players = players.filter((player) => player.level >= lowerBound && player.level <= upperBound);
 				} else {
@@ -212,7 +212,7 @@ export abstract class Bot {
 		players.sort((b, a) => b.level - a.level);
 
 		const maxResults = 15;
-		let numResultsBeforeFiltered = players.length;
+		const numResultsBeforeFiltered = players.length;
 		if (players.length > maxResults) {
 			players.splice(maxResults);
 		}

@@ -10,6 +10,7 @@ import { Config } from "./Config";
 import { NotBot } from "./guards/NotBot";
 import { Admin } from "./guards/Admin";
 import { AdminRole } from "./guards/AdminRole";
+import { IgnoreGuild } from "./guards/IgnoreGuild";
 
 import { Area } from "./entity/Area";
 import { Guild } from "./entity/Guild";
@@ -25,8 +26,9 @@ const commandPrefix: string = "!transmitter ";
 export abstract class Bot {
 	public static instance: Bot;
 
+	public config: Config;
+
 	private client: Client;
-	private config: Config;
 
 	@On("ready")
 	private async onReady(_: any, client: Client): Promise<void> {
@@ -48,7 +50,7 @@ export abstract class Bot {
 
 	@Command("adminrole :action :role")
 	@Infos({ "forAdmins": true })
-	@Guard(NotBot, Admin)
+	@Guard(IgnoreGuild, NotBot, Admin)
 	private async adminRole(message: CommandMessage, client: Client): Promise<void> {
 		const guild = await Guild.findOrCreate(message.guild.id);
 
@@ -69,7 +71,7 @@ export abstract class Bot {
 	}
 
 	@Command("zone")
-	@Guard(NotBot, AdminRole)
+	@Guard(IgnoreGuild, NotBot, AdminRole)
 	private async zone(message: CommandMessage, client: Client): Promise<void> {
 		const guild = await Guild.findOrCreate(message.guild.id);
 		const name = message.content
@@ -84,7 +86,7 @@ export abstract class Bot {
 	}
 
 	@Command("channel")
-	@Guard(NotBot, AdminRole)
+	@Guard(IgnoreGuild, NotBot, AdminRole)
 	private async channel(message: CommandMessage, client: Client): Promise<void> {
 		const guild = await Guild.findOrCreate(message.guild.id);
 		const name = message.content
@@ -99,7 +101,7 @@ export abstract class Bot {
 	}
 
 	@Command("misc")
-	@Guard(NotBot, AdminRole)
+	@Guard(IgnoreGuild, NotBot, AdminRole)
 	private async miscChannel(message: CommandMessage, client: Client): Promise<void> {
 		const guild = await Guild.findOrCreate(message.guild.id);
 		guild.miscChannel = message.channel.id;
@@ -110,7 +112,7 @@ export abstract class Bot {
 	}
 
 	@Command("pinfo :playerName")
-	@Guard(NotBot, AdminRole)
+	@Guard(IgnoreGuild, NotBot, AdminRole)
 	private async pinfo(message: CommandMessage, client: Client): Promise<void> {
 		const player = await Player.find(message.args.playerName);
 		if (player === undefined) {
@@ -122,7 +124,7 @@ export abstract class Bot {
 	}
 
 	@Command("who")
-	@Guard(NotBot)
+	@Guard(IgnoreGuild, NotBot)
 	private async who(message: CommandMessage, client: Client): Promise<void> {
 		const res = await fetch(`${this.config.apiBaseUrl}/characters/online`);
 		let players: IPlayer[] = await res.json();

@@ -13,6 +13,7 @@ export class Config {
 	public filterAtHere: boolean;
 	public filterAtEveryone: boolean;
 	public apiBaseUrl: string;
+	public ignoreGuilds: string[];
 
 	private static checkedMissingField: boolean = false;
 

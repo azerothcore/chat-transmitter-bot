@@ -15,4 +15,8 @@ export class Area {
 			},
 		});
 	}
+
+	public static async findById(id: number): Promise<Area> {
+		return await getManager().findOne(Area, id);
+	}
 }

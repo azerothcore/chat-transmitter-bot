@@ -221,7 +221,11 @@ export abstract class Bot {
 		}
 
 		const filteredString = numResultsBeforeFiltered !== players.length ? ` (${players.length} displayed)` : "";
-		const list = players.map((player) => `${player.name}    ${player.zone}    level ${player.level} ${this.getRaceString(player.race)} ${this.getClassString(player.class)}${player.guildName ? ("    <" + player.guildName + ">") : ""}`);
+		const list = await Promise.all(players.map(async (player) => {
+			const zone = await Area.findById(player.zone);
+			const guild = player.guildName ? ("    <" + player.guildName + ">") : "";
+			return `${player.name}    ${zone.name}    level ${player.level} ${this.getRaceString(player.race)} ${this.getClassString(player.class)}${guild}`;
+		}));
 		await message.reply(`${numResultsBeforeFiltered} result${players.length === 1 ? "" : "s"}${filteredString}.\n${list.join("\n")}`);
 	}
 

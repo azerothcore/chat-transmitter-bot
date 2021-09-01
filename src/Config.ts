@@ -55,4 +55,4 @@ export class Config {
 		}
 		return missing;
 	}
-}
+};

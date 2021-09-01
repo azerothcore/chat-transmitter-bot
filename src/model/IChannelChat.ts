@@ -6,4 +6,4 @@ export interface IChannelChat {
 	text: string;
 	type: number;
 	channel: string;
-}
+};

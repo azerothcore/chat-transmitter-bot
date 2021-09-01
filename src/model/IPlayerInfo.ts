@@ -7,4 +7,4 @@ export interface IPlayerInfo {
 	accountName: string;
 	accountGuid: number;
 	lastIpAddr: string;
-}
+};

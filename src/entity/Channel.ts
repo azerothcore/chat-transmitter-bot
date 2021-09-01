@@ -11,4 +11,4 @@ export class Channel {
 
 	@Column()
 	name: string;
-}
+};

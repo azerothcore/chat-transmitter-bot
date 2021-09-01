@@ -11,4 +11,4 @@ export class ZoneChannel {
 
 	@Column()
 	name: string;
-}
+};

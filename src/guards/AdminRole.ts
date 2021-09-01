@@ -10,4 +10,4 @@ export const AdminRole: GuardFunction<"message"> = async ([message], client, nex
 			break;
 		}
 	}
-}
+};

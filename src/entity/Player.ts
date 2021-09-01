@@ -52,4 +52,4 @@ export class Player {
 
 		return player;
 	}
-}
+};

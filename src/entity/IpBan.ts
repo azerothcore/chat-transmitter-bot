@@ -35,4 +35,4 @@ export class IpBan {
 		await getManager().save(entry);
 		return entry;
 	}
-}
+};

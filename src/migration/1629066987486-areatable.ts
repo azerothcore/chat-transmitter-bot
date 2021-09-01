@@ -599,4 +599,4 @@ export class areatable1629066987486 implements MigrationInterface {
 	public async down(queryRunner: QueryRunner): Promise<void> {
 		await queryRunner.query("DELETE FROM `area`;");
 	}
-}
+};

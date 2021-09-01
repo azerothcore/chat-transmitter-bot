@@ -103,4 +103,4 @@ export class Guild {
 			this.adminRoles.splice(idx, 1);
 		}
 	}
-}
+};

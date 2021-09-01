@@ -1,4 +1,5 @@
 import * as fetch from "node-fetch";
+import { nanoid } from "nanoid";
 import { getManager } from "typeorm";
 import { Message, MessageEmbed, TextChannel } from "discord.js";
 import { Client, Discord, On, Command, CommandMessage, Infos, Guard } from "@typeit/discord";
@@ -6,6 +7,8 @@ import { Client, Discord, On, Command, CommandMessage, Infos, Guard } from "@typ
 import { ChatMsg } from "./enums";
 import { Utils } from "./Utils";
 import { Config } from "./Config";
+import { WebSocketManager } from "./WebSocketManager";
+import { ICommandResult } from "./controller/CommandController";
 
 import { NotBot } from "./guards/NotBot";
 import { Admin } from "./guards/Admin";
@@ -20,6 +23,11 @@ import { IChat } from "./model/IChat";
 import { IChannelChat } from "./model/IChannelChat";
 import { IPlayer } from "./model/chromiecraft-api/IPlayer";
 
+export interface ICommandState {
+	id: string;
+	message: CommandMessage;
+};
+
 const commandPrefix: string = "!transmitter ";
 
 @Discord(commandPrefix)
@@ -29,6 +37,7 @@ export abstract class Bot {
 	public config: Config;
 
 	private client: Client;
+	private commands: { [key: string]: ICommandState } = { };
 
 	@On("ready")
 	private async onReady(_: any, client: Client): Promise<void> {
@@ -62,14 +71,14 @@ export abstract class Bot {
 
 		if (action === "add" || action === "a") {
 			await guild.addAdminRole(roleId);
-			const confirmMessage = await message.reply(`Role "${roleName}" added to the admin roles.`);
+			const confirmMessage = await message.reply(`role "${roleName}" added to the admin roles.`);
 			await this.deleteCommandAndConfirmMessage(message, confirmMessage);
 		} else if (action === "delete" || action === "del" || action === "d" || action === "remove" || action === "rem" || action === "r") {
 			await guild.removeAdminRole(roleId);
-			const confirmMessage = await message.reply(`Role "${roleName}" removed from the admin roles.`);
+			const confirmMessage = await message.reply(`role "${roleName}" removed from the admin roles.`);
 			await this.deleteCommandAndConfirmMessage(message, confirmMessage);
 		} else {
-			await message.reply(`Unknown action. Syntax: \`${commandPrefix}adminrole add <roleId>\` or \`${commandPrefix}adminrole delete <roleId>\`.`);
+			await message.reply(`unknown action. Syntax: \`${commandPrefix}adminrole add <roleId>\` or \`${commandPrefix}adminrole delete <roleId>\`.`);
 		}
 	}
 
@@ -119,11 +128,31 @@ export abstract class Bot {
 	private async pinfo(message: CommandMessage, client: Client): Promise<void> {
 		const player = await Player.find(message.args.playerName);
 		if (player === undefined) {
-			await message.reply(`Could not find information in cache for player "${message.args.playerName}".`);
+			await message.reply(`could not find information in cache for player "${message.args.playerName}".`);
 			return;
 		}
 
 		await message.reply(`${player.name}: level ${player.level} ${this.getRaceString(player.raceId)} ${this.getClassString(player.classId)}. Character GUID: \`${player.guid}\`\r\nAccount \`${player.accountName}\` (GUID \`${player.accountGuid}\`). Last IP address used: \`${player.lastIpAddr}\``);
+	}
+
+	@Command("command")
+	@Guard(IgnoreGuild, NotBot, AdminRole)
+	private async command(message: CommandMessage, client: Client): Promise<void> {
+		const command = message.content
+			.trim()
+			.slice(commandPrefix.length)
+			.slice("command".length)
+			.trim();
+		const id = nanoid();
+		const success = WebSocketManager.instance.sendCommand(id, command);
+		if (!success) {
+			await message.reply("could not execute command.");
+		} else {
+			this.commands[id] = {
+				id,
+				message,
+			};
+		}
 	}
 
 	@Command("who")
@@ -284,6 +313,22 @@ export abstract class Bot {
 		await channel.send(`[${data.channel}] ${data.player.name}: ${this.processText(data.text)}`);
 	}
 
+	public async onCommandResultReceived(result: ICommandResult): Promise<void> {
+		const command = this.commands[result.commandId];
+		if (!command) {
+			return;
+		}
+
+		let text = result.success ? "command executed successfully." : "command failed.";
+
+		result.output = result.output.trim();
+		if (result.output.length > 0) {
+			text += "\nOutput: ```\n" + result.output + "```";
+		}
+
+		await command.message.reply(text);
+	}
+
 	private processText(text: string): string {
 		// Filter @everyone
 		if (this.config.filterAtEveryone) {
@@ -342,4 +387,4 @@ export abstract class Bot {
 			return this.config.classEmojis[classId - 1];
 		}
 	}
-}
+};

@@ -8,4 +8,4 @@ export class AdminRole {
 
 	@ManyToOne(type => Guild, guild => guild.adminRoles, { "onDelete": "CASCADE" })
 	guild: Guild;
-}
+};

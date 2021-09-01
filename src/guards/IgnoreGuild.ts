@@ -5,4 +5,4 @@ export const IgnoreGuild: GuardFunction<"message"> = async ([message], client, n
 	if (!Bot.instance.config.ignoreGuilds.includes(message.guild.id)) {
 		await next();
 	}
-}
+};

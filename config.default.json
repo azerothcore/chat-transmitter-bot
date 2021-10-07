@@ -6,6 +6,8 @@
 	"classEmojis": [],
 	"useRaceEmoji": false,
 	"raceEmojis": [],
+	"useRaidMarkerEmoji": false,
+	"raidMarkerEmojis": [],
 	"filterAtHere": true,
 	"filterAtEveryone": true,
 	"apiBaseUrl": "",

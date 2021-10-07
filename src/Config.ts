@@ -10,6 +10,8 @@ export class Config {
 	public classEmojis: string[];
 	public useRaceEmoji: boolean;
 	public raceEmojis: string[];
+	public useRaidMarkerEmoji: boolean;
+	public raidMarkerEmojis: string[];
 	public filterAtHere: boolean;
 	public filterAtEveryone: boolean;
 	public apiBaseUrl: string;

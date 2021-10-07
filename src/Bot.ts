@@ -349,6 +349,13 @@ export abstract class Bot {
 			return `[${name}](<https://wotlkdb.com/?${linkType}=${id}>)`;
 		});
 
+		// Raid marker emojis
+		if (this.config.useRaidMarkerEmoji) {
+			["{skull}", "{x}", "{square}", "{moon}", "{triangle}", "{diamond}", "{circle}", "{star}"].forEach((marker, idx) => {
+				text = text.replace(new RegExp(marker, "gi"), this.config.raidMarkerEmojis[idx]);
+			});
+		}
+
 		return text;
 	}
 

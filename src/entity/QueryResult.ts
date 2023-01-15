@@ -26,7 +26,9 @@ export class QueryResult {
 		try {
 			await fs.remove(path.join(Bot.instance.tmpQueryResultsDir, `${this.id}.json`));
 			await fs.remove(path.join(Bot.instance.tmpQueryResultsDir, `${this.id}.csv`));
-		} catch (err) { }
+		} catch (err) {
+			console.warn(`An error occurred while deleting query results: ${err}`);
+		}
 		await db.remove(this);
 	}
 

@@ -1,7 +1,6 @@
 import path from "path";
 import fs from "fs-extra";
-import express from "express";
-import { Express } from "express";
+import express, { Express } from "express";
 
 import { Bot } from "./Bot";
 import { Config } from "./Config";

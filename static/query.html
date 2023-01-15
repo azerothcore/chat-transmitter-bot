@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>Chat Transmitter Query Results</title>
+
+	<link rel="stylesheet" type="text/css" href="/css/bulma.min.css">
+	<link rel="stylesheet" type="text/css" href="/css/main.css">
+
+	<script type="application/javascript" src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+	<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.12.1/css/jquery.dataTables.min.css">
+	<link rel="stylesheet" type="text/css"
+		href="https://cdn.datatables.net/responsive/2.3.0/css/responsive.dataTables.min.css">
+	<link rel="stylesheet" type="text/css" href="/css/datatables.css">
+	<script type="application/javascript" src="https://cdn.datatables.net/1.12.1/js/jquery.dataTables.min.js"></script>
+	<script type="application/javascript"
+		src="https://cdn.datatables.net/responsive/2.3.0/js/dataTables.responsive.min.js"></script>
+</head>
+
+<body>
+	<section class="section">
+		<table id="results"></table>
+	</section>
+</body>
+
+<script type="application/javascript">
+	$.getJSON(`${window.location.href}.json`).done(json => {
+		$("#results").DataTable({
+			data: json.data,
+			columns: json.columns.map(col => {
+				return {
+					title: col,
+				};
+			}),
+			scrollX: true,
+		});
+	});
+</script>
+
+</html>

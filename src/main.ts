@@ -1,26 +1,39 @@
-import "reflect-metadata";
-import * as path from "path";
-import { Client } from "@typeit/discord";
-import { createConnection } from "typeorm";
+import cron from "node-cron";
+import "source-map-support/register";
 
+import { Bot } from "./Bot";
 import { Config } from "./Config";
+import { HttpServer } from "./HttpServer";
+import { QueryResult } from "./entity/QueryResult";
 import { WebSocketManager } from "./WebSocketManager";
 
-async function main(): Promise<void> {
-	const conn = await createConnection();
+const main = async () => {
 	const config = await Config.load();
-	const wsManager = new WebSocketManager();
+	const bot = new Bot(config);
+	const wsManager = new WebSocketManager(config);
+	const httpServer = new HttpServer(config);
 
-	wsManager.start(config);
-	const client = new Client({
-		classes: [
-			path.join(path.resolve("build"), "Bot.js"),
-		],
-		silent: false,
-		variablesChar: ":",
+	cron.schedule("0 */6 * * *", async () => {
+		await cleanup(config);
 	});
 
-	await client.login(config.discordToken);
-}
+	wsManager.run();
+	httpServer.run();
+	await bot.run();
+};
+
+const cleanup = async (config: Config) => {
+	const now = new Date();
+	const results = await QueryResult.findAll();
+
+	for (const result of results) {
+		const d = new Date(result.created);
+		d.setDate(d.getDate() + config.queryResultsKeepDuration);
+
+		if (d > now) {
+			await result.delete();
+		}
+	}
+};
 
 main();

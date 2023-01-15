@@ -3,12 +3,12 @@ import { Event } from "./Event";
 
 export class ChatController {
 	@Event("localChat")
-	public localChat(data: any): void {
-		Bot.instance.transmitMessage(data);
+	public localChat(data): void {
+		Bot.instance.onLocalChat(data);
 	}
 
 	@Event("channelChat")
-	public channelChat(data: any): void {
-		Bot.instance.transmitChannelMessage(data);
+	public channelChat(data): void {
+		Bot.instance.onChannelChat(data);
 	}
-};
+}

@@ -1,0 +1,4 @@
+html {
+	/* Removes the vertical scrollbar caused by Bulma */
+	overflow-y: auto;
+}

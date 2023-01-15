@@ -1,6 +1,9 @@
 {
-	"listenPort": 22141,
+	"wsPort": 22141,
+	"httpHost": "localhost",
+	"httpPort": 22142,
 	"secretKey": "<put a long random string here, and use the same value for the module's configuration field BotWsKey>",
+	"discordClientId": "",
 	"discordToken": "<token>",
 	"useClassEmoji": false,
 	"classEmojis": [],
@@ -8,8 +11,11 @@
 	"raceEmojis": [],
 	"useRaidMarkerEmoji": false,
 	"raidMarkerEmojis": [],
+	"confirmEmojis": [],
 	"filterAtHere": true,
 	"filterAtEveryone": true,
 	"apiBaseUrl": "",
-	"ignoreGuilds": []
+	"ignoreGuilds": [],
+	"queryResultsKeepDuration": 90,
+	"anticheatReportThrottleDuration": 60
 }

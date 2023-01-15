@@ -1,7 +1,7 @@
 export interface IEvent {
 	eventName: string;
 	methodName: string;
-};
+}
 
 export const Event = (name: string): MethodDecorator => {
 	return (target, propertyKey: string, descriptor: PropertyDescriptor) => {

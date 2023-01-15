@@ -6,6 +6,6 @@ export class AdminRole {
 	@PrimaryColumn()
 	discordId: string;
 
-	@ManyToOne(type => Guild, guild => guild.adminRoles, { "onDelete": "CASCADE" })
+	@ManyToOne(type => Guild, guild => guild.adminRoles, { onDelete: "CASCADE" })
 	guild: Guild;
-};
+}

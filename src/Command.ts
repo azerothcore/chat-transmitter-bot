@@ -1,6 +1,8 @@
+import path from "path";
+
+import glob from "glob-promise";
 import { SlashCommandBuilder } from "@discordjs/builders";
 import { AutocompleteInteraction, CommandInteraction } from "discord.js";
-import glob from "glob-promise";
 
 export interface Command {
 	commandName: string;
@@ -12,9 +14,9 @@ export interface Command {
 }
 
 export const getAllCommands = async (): Promise<Command[]> => {
-	const files = await glob.promise(__dirname + "/commands/**/*.js");
+	const files = await glob.promise("commands/**/*.js", { cwd: __dirname });
 	const imports = await Promise.all(files.map((file: string) => {
-		return import(file.replace(__dirname, ".").replace(".js", ""));
+		return import(path.join(__dirname, file));
 	}));
 	return imports
 		.map(imp => imp.default)

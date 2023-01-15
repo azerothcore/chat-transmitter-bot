@@ -1,10 +1,10 @@
-import fs from "fs-extra";
 import path from "path";
+import fs from "fs-extra";
 import { nanoid } from "nanoid";
 import { stringify as csvStringify } from "csv";
 import { ButtonStyle } from "discord-api-types/v9";
 import { ActionRowBuilder, ButtonBuilder, SlashCommandBuilder } from "@discordjs/builders";
-import { AttachmentBuilder, AutocompleteInteraction, ButtonInteraction, ChatInputCommandInteraction, CommandInteraction, SelectMenuInteraction } from "discord.js";
+import { AttachmentBuilder, AutocompleteInteraction, ButtonInteraction, ChannelSelectMenuInteraction, ChatInputCommandInteraction, CommandInteraction, MentionableSelectMenuInteraction, RoleSelectMenuInteraction, SelectMenuInteraction, UserSelectMenuInteraction } from "discord.js";
 
 import { Bot } from "../Bot";
 import { Command } from "../Command";
@@ -16,7 +16,7 @@ import { IQueryResult, QueryController } from "../controller/QueryController";
 
 interface IQueryState {
 	id: string;
-	interaction: ButtonInteraction | SelectMenuInteraction | ChatInputCommandInteraction;
+	interaction: ButtonInteraction | SelectMenuInteraction | UserSelectMenuInteraction | RoleSelectMenuInteraction | MentionableSelectMenuInteraction | ChannelSelectMenuInteraction | ChatInputCommandInteraction;
 }
 
 export default class Query implements Command {
@@ -296,7 +296,7 @@ export default class Query implements Command {
 			++idx;
 		}
 
-		const execute = async (query: QueryEntity, interaction: ButtonInteraction | SelectMenuInteraction | ChatInputCommandInteraction) => {
+		const execute = async (query: QueryEntity, interaction: ButtonInteraction | SelectMenuInteraction | UserSelectMenuInteraction | RoleSelectMenuInteraction | MentionableSelectMenuInteraction | ChannelSelectMenuInteraction | ChatInputCommandInteraction) => {
 			await interaction.deferReply();
 			const id = nanoid();
 			const success = WebSocketManager.instance.sendQuery(id, query.getFormattedQuery(args), query.database);
@@ -310,7 +310,7 @@ export default class Query implements Command {
 			}
 		};
 
-		if (query.query.includes("INSERT") || query.query.includes("UPDATE") || query.query.includes("DELETE")) {
+		if (query.query.includes("INSERT ") || query.query.includes("UPDATE ") || query.query.includes("DELETE ")) {
 			const confirmEmoji = Bot.instance.randomConfirmEmoji();
 			const confirmButton = new ButtonBuilder()
 				.setCustomId("query-run-confirm")

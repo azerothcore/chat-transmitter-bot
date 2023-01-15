@@ -1,6 +1,6 @@
 import path from "path";
 import { DataSource } from "typeorm";
-import { Client, EmbedBuilder, IntentsBitField, Interaction, InteractionType, TextChannel, verifyString } from "discord.js";
+import { Client, EmbedBuilder, IntentsBitField, Interaction, TextChannel, verifyString } from "discord.js";
 
 import { Config } from "./Config";
 import { ChatMsg } from "./enums";
@@ -69,10 +69,10 @@ export class Bot {
 	}
 
 	private async onInteraction(interaction: Interaction) {
-		if (interaction.type === InteractionType.ApplicationCommand) {
+		if (interaction.isChatInputCommand()) {
 			const cmd = this.commands[interaction.commandName];
 			await cmd?.execute(interaction);
-		} else if (interaction.type === InteractionType.ApplicationCommandAutocomplete) {
+		} else if (interaction.isAutocomplete()) {
 			const cmd = this.commands[interaction.commandName];
 			await cmd?.autocomplete?.(interaction);
 		}

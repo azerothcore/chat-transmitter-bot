@@ -3,6 +3,7 @@ import { Entity, PrimaryColumn, Column, OneToMany } from "typeorm";
 
 import { Bot } from "../Bot";
 import { Query } from "./Query";
+import { Player } from "./Player";
 import { db } from "../dataSource";
 import { Channel } from "./Channel";
 import { AdminRole } from "./AdminRole";
@@ -30,6 +31,9 @@ export class Guild {
 
 	@OneToMany(_type => Query, query => query.guild)
 	queries: Query[];
+
+	@OneToMany(_type => Player, player => player.guild)
+	players: Player[];
 
 	public static async findOrCreate(discordId: string): Promise<Guild> {
 		let guild = await Guild.find(discordId);

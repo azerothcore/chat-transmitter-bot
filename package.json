@@ -12,6 +12,8 @@
 		"typeorm": "typeorm-ts-node-esm",
 		"migration:create": "typeorm-ts-node-esm migration:create",
 		"migration:generate": "typeorm-ts-node-esm migration:generate -d build/dataSource.js",
+		"migration:revert": "typeorm-ts-node-esm migration:revert -d build/dataSource.js",
+		"migration:run": "typeorm-ts-node-esm migration:run -d build/dataSource.js",
 		"registercommands": "node build/registerCommands.js",
 		"unregistercommands": "node build/unregisterCommands.js",
 		"test": "echo \"Error: no test specified\" && exit 1"

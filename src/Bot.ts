@@ -135,7 +135,7 @@ export class Bot {
 			return;
 		}
 
-		Player.save(data.player);
+		Player.save(data.player, guild);
 
 		const zoneChannel = guild.getZoneChannel(data.zone);
 		if (!zoneChannel) {
@@ -168,7 +168,7 @@ export class Bot {
 			return;
 		}
 
-		Player.save(data.player);
+		Player.save(data.player, guild);
 
 		const channelId = guild.getChannel(data.channel)?.discordId ||
 			guild.getZoneChannel(data.channel.replace("General - ", ""))?.discordId ||
@@ -193,7 +193,7 @@ export class Bot {
 			return;
 		}
 
-		await Player.save(data.player);
+		await Player.save(data.player, guild);
 
 		const channelId = guild.anticheatReportsChannel;
 		if (!channelId) {

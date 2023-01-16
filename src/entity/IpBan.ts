@@ -1,4 +1,6 @@
-import { Entity, Column, PrimaryColumn, getManager } from "typeorm";
+import { Entity, Column, PrimaryColumn } from "typeorm";
+
+import { db } from "../dataSource";
 
 @Entity()
 export class IpBan {
@@ -11,16 +13,14 @@ export class IpBan {
 	@Column()
 	banned: boolean;
 
-	public static async find(ipAddress: string): Promise<IpBan> {
-		return await getManager().findOne(IpBan, {
-			ipAddress,
-		});
+	public static async find(ipAddress: string): Promise<IpBan | null> {
+		return await db.findOneBy(IpBan, { ipAddress });
 	}
 
 	public static async addConnectionAttempt(ipAddress: string): Promise<IpBan> {
-		let entry: IpBan = await this.find(ipAddress);
+		let entry = await this.find(ipAddress);
 
-		if (entry === undefined) {
+		if (!entry) {
 			entry = new IpBan();
 			entry.ipAddress = ipAddress;
 			entry.attempts = 0;
@@ -32,7 +32,7 @@ export class IpBan {
 			entry.banned = true;
 		}
 
-		await getManager().save(entry);
+		await db.save(entry);
 		return entry;
 	}
-};
+}

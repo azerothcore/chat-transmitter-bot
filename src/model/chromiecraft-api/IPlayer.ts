@@ -10,4 +10,4 @@ export interface IPlayer {
 	zone: number;
 	guildId: number;
 	guildName: string;
-};
+}

@@ -6,9 +6,9 @@ export class Channel {
 	@PrimaryColumn()
 	discordId: string;
 
-	@ManyToOne(type => Guild, guild => guild.zoneChannels, { "onDelete": "CASCADE" })
+	@ManyToOne(_type => Guild, guild => guild.zoneChannels, { onDelete: "CASCADE" })
 	guild: Guild;
 
 	@Column()
 	name: string;
-};
+}

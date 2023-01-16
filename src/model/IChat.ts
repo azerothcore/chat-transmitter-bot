@@ -7,4 +7,4 @@ export interface IChat {
 	text: string;
 	type: ChatMsg;
 	zone: string;
-};
+}

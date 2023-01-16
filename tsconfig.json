@@ -1,17 +1,18 @@
 {
 	"compilerOptions": {
-		"module": "commonjs",
-		"target": "es2017",
+		"strictNullChecks": true,
+		"module": "CommonJS",
+		"target": "ES2020",
 		"noImplicitAny": false,
-		"sourceMap": false,
+		"sourceMap": true,
 		"outDir": "build",
 		"emitDecoratorMetadata": true,
 		"experimentalDecorators": true,
 		"importHelpers": true,
 		"forceConsistentCasingInFileNames": true,
+		"esModuleInterop": true,
 		"lib": [
-			"es2017",
-			"esnext.asynciterable"
+			"ES2020"
 		],
 		"moduleResolution": "node"
 	},

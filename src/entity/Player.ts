@@ -1,12 +1,19 @@
-import { Entity, PrimaryColumn, Column, getManager, getRepository } from "typeorm";
+import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, Index } from "typeorm";
+
+import { Guild } from "./Guild";
+import { db } from "../dataSource";
 import { IPlayerInfo } from "../model/IPlayerInfo";
 
 @Entity()
 export class Player {
-	@PrimaryColumn()
+	@PrimaryGeneratedColumn("increment")
+	id: number;
+
+	@Column()
 	guid: number;
 
 	@Column()
+	@Index()
 	name: string;
 
 	@Column()
@@ -19,6 +26,9 @@ export class Player {
 	classId: number;
 
 	@Column()
+	gender: number;
+
+	@Column()
 	accountName: string;
 
 	@Column()
@@ -27,16 +37,28 @@ export class Player {
 	@Column({ nullable: true })
 	lastIpAddr: string;
 
-	public static async find(name: string): Promise<Player> {
-		return await getRepository(Player)
+	@ManyToOne(_type => Guild, guild => guild.players, { onDelete: "CASCADE" })
+	guild: Guild;
+
+	public static async findOne(name: string, guild: Guild): Promise<Player | null> {
+		return await db.getRepository(Player)
 			.createQueryBuilder("player")
-			.where("player.name like :name", { name })
+			.where("LOWER(player.name) LIKE LOWER(:name)", { name: `${name}%` })
+			.andWhere("player.guild_discord_id = :guild", { guild: guild.discordId })
 			.getOne();
 	}
 
-	public static async save(data: IPlayerInfo): Promise<Player> {
-		let player = await getManager().findOne(Player, data.guid);
-		if (player === undefined) {
+	public static async find(name: string, guild: Guild): Promise<Player[]> {
+		return await db.getRepository(Player)
+			.createQueryBuilder("player")
+			.where("LOWER(player.name) LIKE LOWER(:name)", { name: `${name}%` })
+			.andWhere("player.guild_discord_id = :guild", { guild: guild.discordId })
+			.getMany();
+	}
+
+	public static async save(data: IPlayerInfo, guild: Guild): Promise<Player> {
+		let player = await db.findOneBy(Player, { guid: data.guid });
+		if (!player) {
 			player = new Player();
 		}
 
@@ -45,11 +67,13 @@ export class Player {
 		player.level = data.level;
 		player.raceId = data.raceId;
 		player.classId = data.classId;
+		player.gender = data.gender;
 		player.accountName = data.accountName;
 		player.accountGuid = data.accountGuid;
 		player.lastIpAddr = data.lastIpAddr;
-		await getManager().save(player);
+		player.guild = guild;
+		await db.save(player);
 
 		return player;
 	}
-};
+}

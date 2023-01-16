@@ -1,24 +1,30 @@
-import WebSocket = require("ws");
+import * as WebSocket from "ws";
+
+type Callback = (event: string | null, data) => void;
 
 export class WebSocketWrapper {
 	private ws: WebSocket;
 	private address: string;
-	private callbacks = {
-		"message": [],
-		"close": [],
+	private callbacks: {
+		message: Callback[];
+		close: Callback[];
 	};
 
 	public constructor(ws: WebSocket, address: string) {
 		this.ws = ws;
 		this.address = address;
+		this.callbacks = {
+			message: [],
+			close: [],
+		};
 		this.setEvents();
 	}
 
-	public on(event: "message" | "close", callback: (event: string, data: any) => void) {
+	public on(event: "message" | "close", callback: Callback) {
 		this.callbacks[event].push(callback);
 	}
 
-	public send(message: string, data: any): void {
+	public send(message: string, data): void {
 		this.ws.send(JSON.stringify({
 			message,
 			data,
@@ -51,9 +57,13 @@ export class WebSocketWrapper {
 		this.ws.on("close", (ws: WebSocket) => {
 			for (const cb of this.callbacks.close) {
 				if (typeof cb === "function") {
-					cb();
+					cb(null, null);
 				}
 			}
 		});
+
+		this.ws.on("error", (err) => {
+			console.error(err);
+		});
 	}
-};
+}

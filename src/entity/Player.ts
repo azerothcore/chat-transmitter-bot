@@ -57,7 +57,7 @@ export class Player {
 	}
 
 	public static async save(data: IPlayerInfo, guild: Guild): Promise<Player> {
-		let player = await db.findOneBy(Player, { guid: data.guid });
+		let player = await this.findOne(data.name, guild);
 		if (!player) {
 			player = new Player();
 		}

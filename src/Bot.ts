@@ -69,6 +69,10 @@ export class Bot {
 	}
 
 	private async onInteraction(interaction: Interaction) {
+		if (interaction.guildId && this.config.ignoreGuilds.includes(interaction.guildId)) {
+			return;
+		}
+
 		if (interaction.isChatInputCommand()) {
 			const cmd = this.commands[interaction.commandName];
 			await cmd?.execute(interaction);

@@ -1,17 +1,10 @@
-import { nanoid } from "nanoid";
 import { SlashCommandBuilder } from "@discordjs/builders";
 import { AutocompleteInteraction, CommandInteraction } from "discord.js";
 
 import { Bot } from "../Bot";
 import { Command } from "../Command";
 import { Guild } from "../entity/Guild";
-import { WebSocketManager } from "../WebSocketManager";
 import { CommandController, ICommandResult } from "../controller/CommandController";
-
-interface ICommandState {
-	id: string;
-	interaction: CommandInteraction;
-}
 
 class ServerCommandArg {
 	private name: string;
@@ -62,7 +55,6 @@ export default class ServerCommand implements Command {
 	public commandName = "command";
 	public description = "Run a server command";
 
-	private commands: { [key: string]: ICommandState } = {};
 	private dummyArgNames: string[];
 	private commandArguments: ServerCommandArg[];
 
@@ -519,8 +511,6 @@ export default class ServerCommand implements Command {
 				.addArg("graveyard")
 				.addArg("startzone"),
 		];
-
-		CommandController.instance?.onCommandResult(this._onCommandResult.bind(this));
 	}
 
 	public async build(builder: SlashCommandBuilder) {
@@ -572,15 +562,11 @@ export default class ServerCommand implements Command {
 
 		await interaction.deferReply();
 
-		const id = nanoid();
-		const success = WebSocketManager.instance.sendCommand(id, command);
-		if (!success) {
+		const res = CommandController.instance.runCommand(command, async (result) => {
+			await ServerCommand.onCommandResult(interaction, result);
+		});
+		if (res === false) {
 			await interaction.editReply("❌ Could not execute command.");
-		} else {
-			this.commands[id] = {
-				id,
-				interaction,
-			};
 		}
 	}
 
@@ -627,16 +613,7 @@ export default class ServerCommand implements Command {
 			.map(arg => arg.toDiscordChoiceData()));
 	}
 
-	private async _onCommandResult(result: ICommandResult) {
-		const command = this.commands[result.commandId];
-		if (!command) {
-			return;
-		}
-
-		ServerCommand.onCommandResult(command, result);
-	}
-
-	public static async onCommandResult(command: ICommandState, result: ICommandResult) {
+	public static async onCommandResult(interaction: CommandInteraction, result: ICommandResult) {
 		let text = result.success ? "✅ Command executed successfully." : "❌ Command failed.";
 
 		result.output = result.output.trim();
@@ -650,9 +627,9 @@ export default class ServerCommand implements Command {
 			append: "\n```",
 			char: "\n",
 		});
-		await command.interaction.editReply(split.shift() ?? "");
+		await interaction.editReply(split.shift() ?? "");
 		for (const msg of split) {
-			await command.interaction.followUp(msg);
+			await interaction.followUp(msg);
 		}
 	}
 

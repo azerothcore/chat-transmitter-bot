@@ -1,27 +1,12 @@
-import { nanoid } from "nanoid";
-import { ActionRowBuilder, ButtonBuilder, ButtonInteraction, ButtonStyle, CommandInteraction, ComponentType, ModalBuilder, TextInputBuilder, TextInputStyle } from "discord.js";
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle, CommandInteraction, ComponentType, ModalBuilder, TextInputBuilder, TextInputStyle } from "discord.js";
 
 import { Bot } from "../Bot";
 import { Command } from "../Command";
-import { CommandController, ICommandResult } from "../controller/CommandController";
-import { WebSocketManager } from "../WebSocketManager";
-
-interface ICommandState {
-	commandIds: string[];
-	interaction: ButtonInteraction;
-	remainingCommands: number;
-	errors: string[];
-}
+import { CommandController } from "../controller/CommandController";
 
 export default class Mail implements Command {
 	public commandName = "mail";
 	public description = "Sends to one or multiple players";
-
-	private commands: ICommandState[] = [];
-
-	public constructor() {
-		CommandController.instance?.onCommandResult(this.onCommandResult.bind(this));
-	}
 
 	public async execute(interaction: CommandInteraction) {
 		const modalId = `mail-modal-${interaction.id}`;
@@ -130,21 +115,30 @@ export default class Mail implements Command {
 			});
 			if (clicked) {
 				const commands = this.makeMailCommands(players, subject, money, items, body);
-				const commandIds: string[] = [];
+				let remainingCommands = commands.length;
+				const errors: string[] = [];
 				for (const cmd of commands) {
-					const id = nanoid();
-					if (!WebSocketManager.instance.sendCommand(id, cmd)) {
+					const res = CommandController.instance.runCommand(cmd, async (result) => {
+						if (!result.success) {
+							errors.push(result.output);
+						}
+
+						remainingCommands -= 1;
+						if (remainingCommands > 0) {
+							return;
+						}
+
+						if (errors.length > 0) {
+							await clicked.reply(errors.join("\n"));
+						} else {
+							await clicked.reply(`📨 Mail${commands.length > 1 ? "s" : ""} sent!`);
+						}
+					});
+
+					if (res === false) {
 						await clicked.reply("❌ Could not send mail");
-						return;
 					}
-					commandIds.push(id);
 				}
-				this.commands.push({
-					commandIds,
-					interaction: clicked,
-					remainingCommands: commands.length,
-					errors: [],
-				});
 			}
 		}
 	}
@@ -165,28 +159,5 @@ export default class Mail implements Command {
 		}
 
 		return commands;
-	}
-
-	private async onCommandResult(result: ICommandResult) {
-		const command = this.commands.find(c => c.commandIds.includes(result.commandId));
-		if (!command) {
-			return;
-		}
-
-		if (!result.success) {
-			command.errors.push(result.output);
-		}
-
-		command.remainingCommands -= 1;
-		if (command.remainingCommands > 0) {
-			return;
-		}
-
-		if (command.errors.length > 0) {
-			await command.interaction.reply(command.errors.join("\n"));
-		} else {
-			await command.interaction.reply(`📨 Mail${command.commandIds.length > 1 ? "s" : ""} sent!`);
-		}
-		this.commands = this.commands.filter(c => c.remainingCommands === 0);
 	}
 }

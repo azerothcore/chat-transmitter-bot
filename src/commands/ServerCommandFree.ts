@@ -1,26 +1,13 @@
-import { nanoid } from "nanoid";
 import { CommandInteraction } from "discord.js";
 import { SlashCommandBuilder } from "@discordjs/builders";
 
 import { Command } from "../Command";
 import ServerCommand from "./ServerCommand";
-import { WebSocketManager } from "../WebSocketManager";
-import { CommandController, ICommandResult } from "../controller/CommandController";
-
-interface ICommandState {
-	id: string;
-	interaction: CommandInteraction;
-}
+import { CommandController } from "../controller/CommandController";
 
 export default class ServerCommandFree implements Command {
 	public commandName = "commandfree";
 	public description = "Run a server command without selecting from the list of arguments";
-
-	private commands: { [key: string]: ICommandState } = {};
-
-	public constructor() {
-		CommandController.instance?.onCommandResult(this.onCommandResult.bind(this));
-	}
 
 	public async build(builder: SlashCommandBuilder) {
 		builder
@@ -44,24 +31,11 @@ export default class ServerCommandFree implements Command {
 
 		await interaction.deferReply();
 
-		const id = nanoid();
-		const success = WebSocketManager.instance.sendCommand(id, command);
-		if (!success) {
+		const res = CommandController.instance.runCommand(command, async (result) => {
+			await ServerCommand.onCommandResult(interaction, result);
+		});
+		if (res === false) {
 			await interaction.editReply("❌ Could not execute command.");
-		} else {
-			this.commands[id] = {
-				id,
-				interaction,
-			};
 		}
-	}
-
-	private async onCommandResult(result: ICommandResult) {
-		const command = this.commands[result.commandId];
-		if (!command) {
-			return;
-		}
-
-		ServerCommand.onCommandResult(command, result);
 	}
 }

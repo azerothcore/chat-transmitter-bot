@@ -18,5 +18,6 @@
 	"ignoreGuilds": [],
 	"queryResultsKeepDuration": 90,
 	"anticheatReportCooldown": 60,
-	"anticheatFilteredReportTypes": []
+	"anticheatFilteredReportTypes": [],
+	"moneyEmojis": {}
 }

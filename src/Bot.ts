@@ -259,4 +259,29 @@ export class Bot {
 
 		return this.config.confirmEmojis[Math.floor(Math.random() * this.config.confirmEmojis.length)];
 	}
+
+	public formatMoney(amount: number): string {
+		const goldToCopper = 10000;
+		const silverToCopper = 100;
+		const goldSymbol = this.config.moneyEmojis.gold === "" ? "g" : this.config.moneyEmojis.gold;
+		const silverSymbol = this.config.moneyEmojis.silver === "" ? "s" : this.config.moneyEmojis.silver;
+		const copperSymbol = this.config.moneyEmojis.copper === "" ? "c" : this.config.moneyEmojis.copper;
+		let result = "";
+
+		if (amount >= goldToCopper) {
+			const gold = Math.trunc(amount / goldToCopper);
+			amount -= gold * goldToCopper;
+			result += `${gold}${goldSymbol} `;
+		}
+		if (amount >= silverToCopper) {
+			const silver = Math.trunc(amount / silverToCopper);
+			amount -= silver * silverToCopper;
+			result += `${silver}${silverSymbol} `;
+		}
+		if (amount > 0 || result === "") {
+			result += `${amount}${copperSymbol}`;
+		}
+
+		return result;
+	}
 }

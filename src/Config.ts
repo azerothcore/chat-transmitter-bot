@@ -23,6 +23,7 @@ export class Config {
 	public queryResultsKeepDuration: number;
 	public anticheatReportCooldown: number;
 	public anticheatFilteredReportTypes: EAnticheatReportType[];
+	public moneyEmojis: { gold: string, silver: string, copper: string };
 
 	private static checkedMissingField: boolean;
 

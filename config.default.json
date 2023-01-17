@@ -17,5 +17,6 @@
 	"apiBaseUrl": "",
 	"ignoreGuilds": [],
 	"queryResultsKeepDuration": 90,
-	"anticheatReportThrottleDuration": 60
+	"anticheatReportCooldown": 60,
+	"anticheatFilteredReportTypes": []
 }

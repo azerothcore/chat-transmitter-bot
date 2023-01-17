@@ -11,6 +11,10 @@ export class AnticheatController {
 
 	@Event("anticheatReport")
 	public anticheatReport(data: IAnticheatReport): void {
+		if (Bot.instance.config.anticheatFilteredReportTypes.includes(data.reportType)) {
+			return;
+		}
+
 		if (!(data.player.guid in this.recentReports)) {
 			this.recentReports[data.player.guid] = [];
 		}
@@ -18,7 +22,7 @@ export class AnticheatController {
 			return;
 		}
 		this.recentReports[data.player.guid].push(data.reportType);
-		setTimeout(() => this.removeRecentReport(data), Bot.instance.config.anticheatReportThrottleDuration * 1000);
+		setTimeout(() => this.removeRecentReport(data), Bot.instance.config.anticheatReportCooldown * 1000);
 
 		Bot.instance.onAnticheatReport(data);
 	}

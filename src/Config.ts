@@ -1,5 +1,7 @@
 import fs from "fs-extra";
 
+import { EAnticheatReportType } from "./model/IAnticheatReport";
+
 export class Config {
 	public wsPort: number;
 	public httpHost: string;
@@ -19,7 +21,8 @@ export class Config {
 	public apiBaseUrl: string;
 	public ignoreGuilds: string[];
 	public queryResultsKeepDuration: number;
-	public anticheatReportThrottleDuration: number;
+	public anticheatReportCooldown: number;
+	public anticheatFilteredReportTypes: EAnticheatReportType[];
 
 	private static checkedMissingField: boolean;
 

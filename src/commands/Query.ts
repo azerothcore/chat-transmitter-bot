@@ -3,8 +3,7 @@ import fs from "fs-extra";
 import { nanoid } from "nanoid";
 import { stringify as csvStringify } from "csv";
 import { ButtonStyle } from "discord-api-types/v9";
-import { ActionRowBuilder, ButtonBuilder, SlashCommandBuilder } from "@discordjs/builders";
-import { AttachmentBuilder, AutocompleteInteraction, ButtonInteraction, ChannelSelectMenuInteraction, ChatInputCommandInteraction, CommandInteraction, MentionableSelectMenuInteraction, RoleSelectMenuInteraction, SelectMenuInteraction, UserSelectMenuInteraction } from "discord.js";
+import { ActionRowBuilder, ButtonBuilder, SlashCommandBuilder, AttachmentBuilder, AutocompleteInteraction, ButtonInteraction, ChatInputCommandInteraction, CommandInteraction, ModalBuilder, ModalSubmitInteraction, TextInputBuilder, TextInputStyle, MessagePayload, InteractionEditReplyOptions, InteractionReplyOptions, ComponentType } from "discord.js";
 
 import { Bot } from "../Bot";
 import { Command } from "../Command";
@@ -16,7 +15,7 @@ import { IQueryResult, QueryController } from "../controller/QueryController";
 
 interface IQueryState {
 	id: string;
-	interaction: ButtonInteraction | SelectMenuInteraction | UserSelectMenuInteraction | RoleSelectMenuInteraction | MentionableSelectMenuInteraction | ChannelSelectMenuInteraction | ChatInputCommandInteraction;
+	interaction: ChatInputCommandInteraction | ButtonInteraction | ModalSubmitInteraction;
 }
 
 export default class Query implements Command {
@@ -275,6 +274,7 @@ export default class Query implements Command {
 			await interaction.reply(`❌ Could not find query \`${name}\`.`);
 			return;
 		}
+		const queryArgs = query.getArguments();
 
 		if (query.adminQuery) {
 			const guild = await Guild.findOrCreate(interaction.guildId ?? "");
@@ -284,20 +284,49 @@ export default class Query implements Command {
 			}
 		}
 
-		let idx = 0;
-		const args: string[] = [];
-		for (const arg of query.getArguments()) {
-			const value = interaction.options.getString(`arg${idx + 1}`);
-			if (!value) {
-				await interaction.reply(`❌ Missing argument ${idx + 1}: \`${arg}\``);
-				return;
-			}
-			args.push(value);
-			++idx;
-		}
+		const applyArguments = async (query: QueryEntity, args: string[], interaction: ChatInputCommandInteraction | ButtonInteraction | ModalSubmitInteraction) => {
+			if (query.query.includes("INSERT ") || query.query.includes("UPDATE ") || query.query.includes("DELETE ")) {
+				if (!interaction.deferred) {
+					await interaction.deferReply();
+				}
 
-		const execute = async (query: QueryEntity, interaction: ButtonInteraction | SelectMenuInteraction | UserSelectMenuInteraction | RoleSelectMenuInteraction | MentionableSelectMenuInteraction | ChannelSelectMenuInteraction | ChatInputCommandInteraction) => {
-			await interaction.deferReply();
+				const buttonId = `query-run-confirm-${interaction.id}`;
+				const confirmEmoji = Bot.instance.randomConfirmEmoji();
+				const confirmButton = new ButtonBuilder()
+					.setCustomId(buttonId)
+					.setLabel("Run")
+					.setStyle(ButtonStyle.Primary);
+				if (confirmEmoji) {
+					confirmButton.setEmoji({ id: confirmEmoji });
+				}
+				const row = new ActionRowBuilder<ButtonBuilder>()
+					.addComponents(confirmButton);
+				const response = await interaction.editReply({
+					content: `Run this query?\n\`\`\`SQL\n${query.getFormattedQuery(args)}\n\`\`\``,
+					components: [row],
+				});
+
+				const clicked = await response.awaitMessageComponent({
+					time: 3600000,
+					filter: (click) => click.customId === buttonId && click.user.id === interaction.user.id,
+					componentType: ComponentType.Button,
+				}).catch((err) => {
+					// Timed out
+					return null;
+				});
+				if (clicked) {
+					await execute(query, args, clicked);
+				}
+			} else {
+				await execute(query, args, interaction);
+			}
+		};
+
+		const execute = async (query: QueryEntity, args: string[], interaction: ChatInputCommandInteraction | ButtonInteraction | ModalSubmitInteraction) => {
+			if (!interaction.deferred) {
+				await interaction.deferReply();
+			}
+
 			const id = nanoid();
 			const success = WebSocketManager.instance.sendQuery(id, query.getFormattedQuery(args), query.database);
 			if (!success) {
@@ -310,33 +339,58 @@ export default class Query implements Command {
 			}
 		};
 
-		if (query.query.includes("INSERT ") || query.query.includes("UPDATE ") || query.query.includes("DELETE ")) {
-			const confirmEmoji = Bot.instance.randomConfirmEmoji();
-			const confirmButton = new ButtonBuilder()
-				.setCustomId("query-run-confirm")
-				.setLabel("Run")
-				.setStyle(ButtonStyle.Primary);
-			if (confirmEmoji) {
-				confirmButton.setEmoji({ id: confirmEmoji });
+		let idx = 0;
+		const commandArgs: string[] = [];
+		let missingCommandArg: string | undefined = undefined;
+		for (const arg of queryArgs) {
+			const value = interaction.options.getString(`arg${idx + 1}`);
+			if (!value) {
+				missingCommandArg = arg;
+				break;
 			}
-			const row = new ActionRowBuilder<ButtonBuilder>()
-				.addComponents(confirmButton);
-			const response = await interaction.reply({
-				content: `Run this query?\n\`\`\`SQL\n${query.getFormattedQuery(args)}\n\`\`\``,
-				components: [row],
+			commandArgs.push(value);
+			++idx;
+		}
+
+		if (queryArgs.length >= 1 && queryArgs.length <= 5 && missingCommandArg !== undefined) {
+			// Use modal to fill arguments
+			const modalId = `query-run-modal-${interaction.id}`;
+			const modal = new ModalBuilder()
+				.setCustomId(modalId)
+				.setTitle(query.name);
+
+			const rows = queryArgs.map((queryArg) => {
+				const input = new TextInputBuilder()
+					.setCustomId(queryArg)
+					.setLabel(queryArg)
+					.setRequired(true)
+					.setStyle(TextInputStyle.Short);
+				return new ActionRowBuilder<TextInputBuilder>().addComponents(input);
+			});
+			modal.addComponents(rows);
+			await interaction.showModal(modal);
+			const submission = await interaction.awaitModalSubmit({
+				time: 3600000,
+				filter: (i => i.customId === modalId && i.user.id === interaction.user.id),
+			}).catch(() => {
+				return null;
 			});
 
-			const filter = (click) => click.user.id === interaction.user.id;
-			const collector = response.createMessageComponentCollector({
-				time: 600000,
-				filter,
-			});
-
-			collector?.on("collect", async (interaction) => {
-				await execute(query, interaction);
-			});
+			if (submission) {
+				const args: string[] = [];
+				for (const arg of queryArgs) {
+					args.push(submission.fields.getTextInputValue(arg));
+				}
+				await applyArguments(query, args, submission);
+			}
 		} else {
-			execute(query, interaction);
+			if (missingCommandArg !== undefined) {
+				await interaction.reply(`❌ Missing argument ${idx + 1}: \`${missingCommandArg}\``);
+				return;
+			}
+
+			// Use command arguments to fill query arguments
+			await applyArguments(query, commandArgs, interaction);
 		}
 	}
 
@@ -406,16 +460,24 @@ export default class Query implements Command {
 			return;
 		}
 
+		const reply = async (options: string | MessagePayload | InteractionEditReplyOptions | InteractionReplyOptions) => {
+			if (query.interaction.replied || query.interaction.deferred) {
+				await query.interaction.editReply(options);
+			} else {
+				await query.interaction.reply(options as InteractionReplyOptions);
+			}
+		};
+
 		if (!result.success) {
-			await query.interaction.editReply(result.error ? `❌ Query failed: ${result.error}` : "❌ Query failed.");
+			await reply(result.error ? `❌ Query failed: ${result.error}` : "❌ Query failed.");
 			return;
 		}
 
 		if (result.data.length === 0) {
 			if (result.affectedRows === 0) {
-				await query.interaction.editReply("No rows found / 0 rows affected.");
+				await reply("No rows found / 0 rows affected.");
 			} else {
-				await query.interaction.editReply(`${result.affectedRows} row${result.affectedRows === 1 ? "" : "s"} affected.`);
+				await reply(`${result.affectedRows} row${result.affectedRows === 1 ? "" : "s"} affected.`);
 			}
 			return;
 		}
@@ -439,7 +501,7 @@ export default class Query implements Command {
 			const queryResult = new QueryResult(query.id);
 			await queryResult.save();
 			const txt = `http://${Bot.instance.config.httpHost}:${Bot.instance.config.httpPort}/query/${query.id}`;
-			await query.interaction.editReply({
+			await reply({
 				content: txt,
 				files: [
 					new AttachmentBuilder(filePath),

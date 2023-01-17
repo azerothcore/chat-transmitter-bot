@@ -1,4 +1,8 @@
+import { nanoid } from "nanoid";
+
 import { Event } from "./Event";
+import { EDatabase } from "../entity/Query";
+import { WebSocketManager } from "../WebSocketManager";
 
 export interface IQueryResult {
 	queryId: string;
@@ -11,21 +15,30 @@ export interface IQueryResult {
 
 export class QueryController {
 	public static instance: QueryController;
-	private callbacks: ((data) => void)[];
+	private callbacks: { [key: string]: (result: IQueryResult) => void };
 
 	public constructor() {
 		QueryController.instance = this;
-		this.callbacks = [];
+		this.callbacks = {};
 	}
 
-	public onQueryResult(cb: (data) => void) {
-		this.callbacks.push(cb);
+	public runQuery(query: string, database: EDatabase, cb: (result: IQueryResult) => void): string | false {
+		const id = nanoid();
+		if (!WebSocketManager.instance.sendQuery(id, query, database)) {
+			return false;
+		}
+		this.callbacks[id] = cb;
+		return id;
 	}
 
 	@Event("queryResult")
-	public queryResult(data): void {
-		for (const cb of this.callbacks) {
-			cb?.(data);
+	public queryResult(result: IQueryResult): void {
+		if (!(result.queryId in this.callbacks)) {
+			return;
 		}
+
+		const cb = this.callbacks[result.queryId];
+		cb(result);
+		delete this.callbacks[result.queryId];
 	}
 }

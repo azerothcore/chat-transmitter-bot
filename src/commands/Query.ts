@@ -1,6 +1,5 @@
 import path from "path";
 import fs from "fs-extra";
-import { nanoid } from "nanoid";
 import { stringify as csvStringify } from "csv";
 import { ButtonStyle } from "discord-api-types/v9";
 import { ActionRowBuilder, ButtonBuilder, SlashCommandBuilder, AttachmentBuilder, AutocompleteInteraction, ButtonInteraction, ChatInputCommandInteraction, CommandInteraction, ModalBuilder, ModalSubmitInteraction, TextInputBuilder, TextInputStyle, MessagePayload, InteractionEditReplyOptions, InteractionReplyOptions, ComponentType } from "discord.js";
@@ -9,24 +8,12 @@ import { Bot } from "../Bot";
 import { Command } from "../Command";
 import { Guild } from "../entity/Guild";
 import { QueryResult } from "../entity/QueryResult";
-import { WebSocketManager } from "../WebSocketManager";
 import { EDatabase, Query as QueryEntity } from "../entity/Query";
 import { IQueryResult, QueryController } from "../controller/QueryController";
-
-interface IQueryState {
-	id: string;
-	interaction: ChatInputCommandInteraction | ButtonInteraction | ModalSubmitInteraction;
-}
 
 export default class Query implements Command {
 	public commandName = "query";
 	public description = "Manage SQL queries";
-
-	private queries: { [key: string]: IQueryState } = {};
-
-	public constructor() {
-		QueryController.instance?.onQueryResult(this.onQueryResult.bind(this));
-	}
 
 	public async build(builder: SlashCommandBuilder) {
 		builder
@@ -327,15 +314,11 @@ export default class Query implements Command {
 				await interaction.deferReply();
 			}
 
-			const id = nanoid();
-			const success = WebSocketManager.instance.sendQuery(id, query.getFormattedQuery(args), query.database);
-			if (!success) {
+			const res = QueryController.instance.runQuery(query.getFormattedQuery(args), query.database, async (result: IQueryResult) => {
+				await this.onQueryResult(interaction, result);
+			});
+			if (res === false) {
 				await interaction.editReply("❌ Could not execute query.");
-			} else {
-				this.queries[id] = {
-					id,
-					interaction,
-				};
 			}
 		};
 
@@ -417,15 +400,11 @@ export default class Query implements Command {
 		}
 
 		await interaction.deferReply();
-		const id = nanoid();
-		const success = WebSocketManager.instance.sendQuery(id, sql, database);
-		if (!success) {
+		const res = QueryController.instance.runQuery(sql, database, async (result: IQueryResult) => {
+			await this.onQueryResult(interaction, result);
+		});
+		if (res === false) {
 			await interaction.editReply("❌ Could not execute query.");
-		} else {
-			this.queries[id] = {
-				id,
-				interaction,
-			};
 		}
 	}
 
@@ -454,17 +433,12 @@ export default class Query implements Command {
 		}
 	}
 
-	private async onQueryResult(result: IQueryResult) {
-		const query = this.queries[result.queryId];
-		if (!query) {
-			return;
-		}
-
+	private async onQueryResult(interaction: ChatInputCommandInteraction | ButtonInteraction | ModalSubmitInteraction, result: IQueryResult) {
 		const reply = async (options: string | MessagePayload | InteractionEditReplyOptions | InteractionReplyOptions) => {
-			if (query.interaction.replied || query.interaction.deferred) {
-				await query.interaction.editReply(options);
+			if (interaction.replied || interaction.deferred) {
+				await interaction.editReply(options);
 			} else {
-				await query.interaction.reply(options as InteractionReplyOptions);
+				await interaction.reply(options as InteractionReplyOptions);
 			}
 		};
 
@@ -483,7 +457,7 @@ export default class Query implements Command {
 		}
 
 		await fs.ensureDir(Bot.instance.tmpQueryResultsDir);
-		await fs.writeFile(path.join(Bot.instance.tmpQueryResultsDir, `${query.id}.json`), JSON.stringify({
+		await fs.writeFile(path.join(Bot.instance.tmpQueryResultsDir, `${result.queryId}.json`), JSON.stringify({
 			columns: result.columns,
 			data: result.data.map(row => result.columns.map(col => (row as object)[col])),
 		}));
@@ -496,11 +470,11 @@ export default class Query implements Command {
 				return;
 			}
 
-			const filePath = path.join(Bot.instance.tmpQueryResultsDir, `${query.id}.csv`);
+			const filePath = path.join(Bot.instance.tmpQueryResultsDir, `${result.queryId}.csv`);
 			await fs.writeFile(filePath, output);
-			const queryResult = new QueryResult(query.id);
+			const queryResult = new QueryResult(result.queryId);
 			await queryResult.save();
-			const txt = `http://${Bot.instance.config.httpHost}:${Bot.instance.config.httpPort}/query/${query.id}`;
+			const txt = `http://${Bot.instance.config.httpHost}:${Bot.instance.config.httpPort}/query/${result.queryId}`;
 			await reply({
 				content: txt,
 				files: [

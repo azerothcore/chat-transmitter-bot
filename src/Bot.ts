@@ -211,7 +211,7 @@ export class Bot {
 		}
 
 		const player = data.player;
-		const reportType = EAnticheatReportType[data.reportType].replace(/([A-Z])/g, " $1").trim();
+		const reportType = (EAnticheatReportType[data.reportType]?.replace(/([A-Z])/g, " $1") ?? "Unknown Report Type").trim();
 		await channel.send(`**${reportType}**\n${player.name}: level ${player.level} ${Bot.instance.getRaceString(player.raceId, player.gender)} ${Bot.instance.getClassString(player.classId)}. Character GUID: \`${player.guid}\`\r\nAccount: \`${player.accountName}\` (ID: \`${player.accountGuid}\`).\r\nLast IP address used: \`${player.lastIpAddr}\``);
 	}
 

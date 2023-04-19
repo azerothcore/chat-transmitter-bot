@@ -16,6 +16,7 @@ export enum EAnticheatReportType {
 	AntiKnockbackHack = 11,
 	NoFallDamageHack = 12,
 	OpAckHack = 13,
+	CounterMeasures = 14,
 }
 
 export interface IAnticheatReport {

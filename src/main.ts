@@ -8,6 +8,11 @@ import { QueryResult } from "./entity/QueryResult";
 import { WebSocketManager } from "./WebSocketManager";
 
 const main = async () => {
+	process.on("uncaughtException", function (err) {
+		console.log("Exception: " + err);
+		console.log(err.stack);
+	});
+
 	const config = await Config.load();
 	const bot = new Bot(config);
 	const wsManager = new WebSocketManager(config);

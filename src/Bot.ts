@@ -9,6 +9,8 @@ import { Guild } from "./entity/Guild";
 import { Player } from "./entity/Player";
 import { dataSource } from "./dataSource.js";
 import { Command, getAllCommands } from "./Command";
+
+import { IElunaError } from "./model/IElunaError";
 import { IChannelChat } from "./model/IChannelChat";
 import { EAnticheatReportType, IAnticheatReport } from "./model/IAnticheatReport";
 
@@ -213,6 +215,26 @@ export class Bot {
 		const player = data.player;
 		const reportType = (EAnticheatReportType[data.reportType]?.replace(/([A-Z])/g, " $1") ?? "Unknown Report Type").trim();
 		await channel.send(`**${reportType}**\n${player.name}: level ${player.level} ${Bot.instance.getRaceString(player.raceId, player.gender)} ${Bot.instance.getClassString(player.classId)}. Character GUID: \`${player.guid}\`\r\nAccount: \`${player.accountName}\` (ID: \`${player.accountGuid}\`).\r\nLast IP address used: \`${player.lastIpAddr}\``);
+	}
+
+	public async onElunaError(data: IElunaError) {
+		const guild = await Guild.find(data.guildId);
+		if (!guild) {
+			return;
+		}
+
+		const channelId = guild.elunaChannel;
+		if (!channelId) {
+			return;
+		}
+
+		const channel = await this.client.channels.fetch(channelId) as TextChannel;
+		if (!channel) {
+			console.error(`Could not find channel ${channelId} in guild ${guild.discordId}`);
+			return;
+		}
+
+		await channel.send("**Eluna Error** :warning:\n```\n" + data.trace + "\n```");
 	}
 
 	/**

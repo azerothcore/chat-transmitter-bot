@@ -20,6 +20,9 @@ export class Guild {
 	@Column({ nullable: true })
 	anticheatReportsChannel: string;
 
+	@Column({ nullable: true })
+	elunaChannel: string;
+
 	@OneToMany(_type => Channel, chan => chan.guild)
 	channels: Channel[];
 

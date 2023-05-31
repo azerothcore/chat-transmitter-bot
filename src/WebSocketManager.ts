@@ -3,9 +3,11 @@ import { IpBan } from "./entity/IpBan";
 import { EDatabase } from "./entity/Query";
 import { IEvent } from "./controller/Event";
 import { WebSocketWrapper } from "./WebSocketWrapper";
+import { WebSocketServerWrapper } from "./WebSocketServerWrapper";
+
 import { ChatController } from "./controller/ChatController";
 import { QueryController } from "./controller/QueryController";
-import { WebSocketServerWrapper } from "./WebSocketServerWrapper";
+import { ElunaController } from "./controller/ElunaController";
 import { CommandController } from "./controller/CommandController";
 import { AnticheatController } from "./controller/AnticheatController";
 
@@ -36,7 +38,7 @@ export class WebSocketManager {
 			console.log(`WebSocket server is listening on 0.0.0.0:${this.config.wsPort}.`);
 		});
 
-		const controllers = [ChatController, CommandController, QueryController, AnticheatController].map(controller => new controller());
+		const controllers = [ChatController, CommandController, QueryController, AnticheatController, ElunaController].map(controller => new controller());
 		const handlers: { [key: string]: (data) => void } = {};
 		for (const controller of controllers) {
 			const events: IEvent[] = Reflect.getMetadata("events", controller.constructor);

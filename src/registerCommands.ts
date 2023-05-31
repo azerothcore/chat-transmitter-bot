@@ -30,7 +30,9 @@ const main = async () => {
 	const config = await Config.load();
 	const args = parseArgs();
 
-	const promises = (await getAllCommands())
+	const allCommands = await getAllCommands();
+	console.log("Registering commands", allCommands.map(cmd => cmd.commandName).join(", "));
+	const promises = allCommands
 		.map(async (cmd) => {
 			const builder = new SlashCommandBuilder()
 				.setName(cmd.commandName)

@@ -26,7 +26,7 @@ export class Config {
 	public moneyEmojis: { gold: string, silver: string, copper: string };
 	// Optional static channel routing, used as a fallback when a guild has no
 	// matching binding in the database. Key is a guild id or "default".
-	public channels?: { [guildId: string]: { anticheatReports?: string, eluna?: string, misc?: string } };
+	public channels?: { [guildId: string]: { anticheatReports?: string, eluna?: string, misc?: string, notifications?: { [source: string]: string } } };
 
 	private static checkedMissingField: boolean;
 

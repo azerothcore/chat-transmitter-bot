@@ -10,6 +10,7 @@ import { QueryController } from "./controller/QueryController";
 import { ElunaController } from "./controller/ElunaController";
 import { CommandController } from "./controller/CommandController";
 import { AnticheatController } from "./controller/AnticheatController";
+import { NotificationController } from "./controller/NotificationController";
 
 export class WebSocketManager {
 	public static instance: WebSocketManager;
@@ -38,7 +39,7 @@ export class WebSocketManager {
 			console.log(`WebSocket server is listening on 0.0.0.0:${this.config.wsPort}.`);
 		});
 
-		const controllers = [ChatController, CommandController, QueryController, AnticheatController, ElunaController].map(controller => new controller());
+		const controllers = [ChatController, CommandController, QueryController, AnticheatController, ElunaController, NotificationController].map(controller => new controller());
 		const handlers: { [key: string]: (data) => void } = {};
 		for (const controller of controllers) {
 			const events: IEvent[] = Reflect.getMetadata("events", controller.constructor);

@@ -19,5 +19,6 @@
 	"queryResultsKeepDuration": 90,
 	"anticheatReportCooldown": 60,
 	"anticheatFilteredReportTypes": [],
-	"moneyEmojis": {}
+	"moneyEmojis": {},
+	"channels": {}
 }

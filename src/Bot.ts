@@ -170,23 +170,23 @@ export class Bot {
 
 	public async onChannelChat(data: IChannelChat) {
 		const guild = await Guild.find(data.guildId);
-		if (!guild) {
-			return;
+		if (guild) {
+			Player.save(data.player, guild);
 		}
 
-		Player.save(data.player, guild);
-
-		const channelId = guild.getChannel(data.channel)?.discordId ||
-			guild.getZoneChannel(data.channel.replace("General - ", ""))?.discordId ||
-			guild.getZoneChannel(data.channel.replace("LocalDefense - ", ""))?.discordId ||
-			guild.miscChannel;
+		const channelId = guild?.getChannel(data.channel)?.discordId ||
+			guild?.getZoneChannel(data.channel.replace("General - ", ""))?.discordId ||
+			guild?.getZoneChannel(data.channel.replace("LocalDefense - ", ""))?.discordId ||
+			guild?.miscChannel ||
+			this.config.channels?.[data.guildId]?.misc ||
+			this.config.channels?.default?.misc;
 		if (!channelId) {
 			return;
 		}
 
 		const channel = await this.client.channels.fetch(channelId) as TextChannel;
 		if (!channel) {
-			console.error(`Could not find channel ${channelId} in guild ${guild.discordId}`);
+			console.error(`Could not find channel ${channelId} in guild ${data.guildId}`);
 			return;
 		}
 
@@ -195,20 +195,20 @@ export class Bot {
 
 	public async onAnticheatReport(data: IAnticheatReport) {
 		const guild = await Guild.find(data.guildId);
-		if (!guild) {
-			return;
+		if (guild) {
+			await Player.save(data.player, guild);
 		}
 
-		await Player.save(data.player, guild);
-
-		const channelId = guild.anticheatReportsChannel;
+		const channelId = guild?.anticheatReportsChannel
+			|| this.config.channels?.[data.guildId]?.anticheatReports
+			|| this.config.channels?.default?.anticheatReports;
 		if (!channelId) {
 			return;
 		}
 
 		const channel = await this.client.channels.fetch(channelId) as TextChannel;
 		if (!channel) {
-			console.error(`Could not find channel ${channelId} in guild ${guild.discordId}`);
+			console.error(`Could not find channel ${channelId} in guild ${data.guildId}`);
 			return;
 		}
 
@@ -219,18 +219,17 @@ export class Bot {
 
 	public async onElunaError(data: IElunaError) {
 		const guild = await Guild.find(data.guildId);
-		if (!guild) {
-			return;
-		}
 
-		const channelId = guild.elunaChannel;
+		const channelId = guild?.elunaChannel
+			|| this.config.channels?.[data.guildId]?.eluna
+			|| this.config.channels?.default?.eluna;
 		if (!channelId) {
 			return;
 		}
 
 		const channel = await this.client.channels.fetch(channelId) as TextChannel;
 		if (!channel) {
-			console.error(`Could not find channel ${channelId} in guild ${guild.discordId}`);
+			console.error(`Could not find channel ${channelId} in guild ${data.guildId}`);
 			return;
 		}
 

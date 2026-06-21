@@ -24,6 +24,9 @@ export class Config {
 	public anticheatReportCooldown: number;
 	public anticheatFilteredReportTypes: EAnticheatReportType[];
 	public moneyEmojis: { gold: string, silver: string, copper: string };
+	// Optional static channel routing, used as a fallback when a guild has no
+	// matching binding in the database. Key is a guild id or "default".
+	public channels?: { [guildId: string]: { anticheatReports?: string, eluna?: string, misc?: string } };
 
 	private static checkedMissingField: boolean;
 

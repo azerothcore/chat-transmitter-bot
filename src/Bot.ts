@@ -11,6 +11,7 @@ import { dataSource } from "./dataSource.js";
 import { Command, getAllCommands } from "./Command";
 
 import { IElunaError } from "./model/IElunaError";
+import { INotification } from "./model/INotification";
 import { IChannelChat } from "./model/IChannelChat";
 import { EAnticheatReportType, IAnticheatReport } from "./model/IAnticheatReport";
 
@@ -234,6 +235,37 @@ export class Bot {
 		}
 
 		await channel.send("**Eluna Error** :warning:\n```\n" + data.trace + "\n```");
+	}
+
+	public async onNotification(data: INotification) {
+		const perGuild = this.config.channels?.[data.guildId]?.notifications;
+		const fallback = this.config.channels?.default?.notifications;
+		const channelId = perGuild?.[data.source] || perGuild?.default
+			|| fallback?.[data.source] || fallback?.default;
+		if (!channelId) {
+			return;
+		}
+
+		const channel = await this.client.channels.fetch(channelId) as TextChannel;
+		if (!channel) {
+			console.error(`Could not find channel ${channelId} in guild ${data.guildId}`);
+			return;
+		}
+
+		// Filter mass mentions only; the source module owns the rest of the formatting
+		// and the message may embed player-controlled text.
+		let message = data.message;
+		if (this.config.filterAtEveryone) {
+			message = message.replace(/@everyone/g, "@ everyone");
+		}
+		if (this.config.filterAtHere) {
+			message = message.replace(/@here/g, "@ here");
+		}
+		message = message.replace(/<@\d+>/g, "<@mention>");
+
+		for (const chunk of Bot.splitMessage(`**[${data.source}]**\n${message}`)) {
+			await channel.send(chunk);
+		}
 	}
 
 	/**
